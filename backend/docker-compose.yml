@@ -1,0 +1,28 @@
+# Local PostgreSQL:  docker compose up -d db
+# Whole stack:       docker compose up --build
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: sportsbook
+      POSTGRES_PASSWORD: sportsbook
+      POSTGRES_DB: sportsbook
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sportsbook"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgres://sportsbook:sportsbook@db:5432/sportsbook
+      JWT_SECRET: change-me-to-a-long-random-string
+      OTP_DEV_MODE: "true"
+      ALLOW_DEV_TOPUP: "true"
+    ports: ["3000:3000"]
+volumes:
+  pgdata:
